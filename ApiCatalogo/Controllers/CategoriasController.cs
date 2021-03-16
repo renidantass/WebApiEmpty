@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using ApiCatalogo.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,12 @@ namespace ApiCatalogo.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter as categorias do banco de dados");
             }
 
+        }
+
+        [HttpGet("/saudacao/{nome}")]
+        public ActionResult<string> GetSaudacao([FromServices] IMeuServico meuServico, string nome)
+        {
+            return meuServico.Saudacao(nome);
         }
 
         [HttpGet("{id}", Name = "ObterCategoria" )]

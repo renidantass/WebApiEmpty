@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -20,58 +21,103 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public async Task<ActionResult<IEnumerable<Produto>>> Get()
         {
-            return _context.Produtos.AsNoTracking().ToList();
+            try
+            {
+                return await _context.Produtos.AsNoTracking().ToListAsync();
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Não foi possível obter os produtos do banco de dados");
+            }
         }
 
-        [HttpGet("{id}", Name = "ObterProduto")]
-        public ActionResult<Produto> Get(int id)
+        [HttpGet("/primeiro")]
+        [HttpGet("primeiro")]
+        public async Task<ActionResult<Produto>> GetFirstAsync()
         {
-            var prod = _context.Produtos.AsNoTracking().FirstOrDefault(p => p.ProdutoId == id);
-            if (prod == null)
+            try
             {
-                return NotFound();
-            }
+                return await _context.Produtos.AsNoTracking().FirstOrDefaultAsync();
 
-            return prod;
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro na consulta ao banco de dados");
+            }
+        }
+
+        [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
+        public async Task<ActionResult<Produto>> GetAsync(int id, string parm2)
+        {
+            try
+            {
+                var prod = await _context.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.ProdutoId == id);
+                if (prod == null)
+                {
+                    return NotFound($"Produto com id {id} não encontrado");
+                }
+
+                return prod;
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Não foi possível o obter produto de id {id} do banco de dados");
+            }
         }
 
         [HttpPost]
         public  ActionResult Post([FromBody] Produto produto)
         {
-            _context.Produtos.Add(produto);
-            _context.SaveChanges();
-            return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+            try
+            {
+                _context.Produtos.Add(produto);
+                _context.SaveChanges();
+                return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Não foi possível adicionar item ao banco de dados");
+            }
         }
 
         [HttpPut("{id}")]
         public ActionResult Put(int id, [FromBody] Produto produto)
         {
-            if(id != produto.ProdutoId)
+            try
             {
-                return BadRequest();
-            }
+                if (id != produto.ProdutoId)
+                {
+                    return BadRequest("Produto não encontrado para alterar");
+                }
 
-            _context.Entry(produto).State = EntityState.Modified;
-            _context.SaveChanges();
-            return Ok();
+                _context.Entry(produto).State = EntityState.Modified;
+                _context.SaveChanges();
+                return Ok("Item editado com sucesso");
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao editar item no banco de dados");
+            }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("/{id}")]
         public ActionResult<Produto> Delete(int id)
         {
-            var prod = _context.Produtos.FirstOrDefault(prod => prod.ProdutoId == id);
-            //var prod = _context.Produtos.Find(id);
-
-            if (prod == null)
+            try
             {
-                return BadRequest();
-            }
+                var prod = _context.Produtos.FirstOrDefault(prod => prod.ProdutoId == id);
+                //var prod = _context.Produtos.Find(id);
 
-            _context.Produtos.Remove(prod);
-            _context.SaveChanges();
-            return prod;
+                if (prod == null)
+                {
+                    return BadRequest();
+                }
+
+                _context.Produtos.Remove(prod);
+                _context.SaveChanges();
+                return prod;
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao deletar item no banco de dados");
+            }
         }
     }
 }

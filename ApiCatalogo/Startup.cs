@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ApiCatalogo.Services;
 
 namespace ApiCatalogo
 {
@@ -38,6 +39,9 @@ namespace ApiCatalogo
             services.AddControllers().AddNewtonsoftJson(
                 options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore   
             );
+
+            services.AddTransient<IMeuServico, MeuServico>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiCatalogo", Version = "v1" });
