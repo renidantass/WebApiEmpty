@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ApiCatalogo.Services;
 using ApiCatalogo.Filters;
+using ApiCatalogo.Extensions;
 
 namespace ApiCatalogo
 {
@@ -59,6 +60,8 @@ namespace ApiCatalogo
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiCatalogo v1"));
             }
+
+            app.ConfigureExceptionHandler();
 
             app.UseHttpsRedirection();
 
