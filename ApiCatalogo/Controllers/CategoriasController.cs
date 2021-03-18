@@ -4,6 +4,7 @@ using ApiCatalogo.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +17,18 @@ namespace ApiCatalogo.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public CategoriasController(AppDbContext context)
+        private readonly IConfiguration _configuration;
+        public CategoriasController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+        }
+
+        [HttpGet("/autor")]
+        public string GetAutor()
+        {
+            var autor = _configuration["ConnectionStrings:DefaultConnection"];
+            return $"O autor é {autor}!!";
         }
 
         [HttpGet]
