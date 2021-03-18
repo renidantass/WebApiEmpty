@@ -4,6 +4,7 @@ using ApiCatalogo.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +17,11 @@ namespace ApiCatalogo.Controllers
     public class ProdutosController : ControllerBase
     {
         private readonly AppDbContext _context;
-        public ProdutosController(AppDbContext context)
+        private readonly ILogger _logger;
+        public ProdutosController(AppDbContext context, ILogger<CategoriasController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]

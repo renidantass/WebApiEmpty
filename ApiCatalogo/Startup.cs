@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using ApiCatalogo.Services;
 using ApiCatalogo.Filters;
 using ApiCatalogo.Extensions;
+using ApiCatalogo.Logging;
 
 namespace ApiCatalogo
 {
@@ -52,7 +53,7 @@ namespace ApiCatalogo
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -60,6 +61,12 @@ namespace ApiCatalogo
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiCatalogo v1"));
             }
+
+            #region Logging mal explicado...
+            //loggerFactory.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration { 
+            //    LogLevel = LogLevel.Information
+            //}));
+            #endregion
 
             app.ConfigureExceptionHandler();
 
