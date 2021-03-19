@@ -1,23 +1,16 @@
 using ApiCatalogo.Context;
+using ApiCatalogo.Extensions;
+using ApiCatalogo.Filters;
+using ApiCatalogo.Repository;
+using ApiCatalogo.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using ApiCatalogo.Services;
-using ApiCatalogo.Filters;
-using ApiCatalogo.Extensions;
-using ApiCatalogo.Logging;
 
 namespace ApiCatalogo
 {
@@ -34,6 +27,7 @@ namespace ApiCatalogo
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<ApiLoggingFilter>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             string mysqlConnection = Configuration.GetConnectionString("DefaultConnection");
 
             services.AddDbContext<AppDbContext>(options =>

@@ -1,6 +1,7 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Filters;
 using ApiCatalogo.Models;
+using ApiCatalogo.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,21 +17,34 @@ namespace ApiCatalogo.Controllers
     [Route("api/[controller]")]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _uow;
         private readonly ILogger _logger;
-        public ProdutosController(AppDbContext context, ILogger<CategoriasController> logger)
+        public ProdutosController(IUnitOfWork uow, ILogger<CategoriasController> logger)
         {
-            _context = context;
+            _uow = uow;
             _logger = logger;
         }
 
-        [HttpGet]
-        [ServiceFilter(typeof(ApiLoggingFilter))]
-        public async Task<ActionResult<IEnumerable<Produto>>> Get()
+        [HttpGet("menorpreco")]
+        public ActionResult<IEnumerable<Produto>> GetProdutosPorPreco()
         {
             try
             {
-                return await _context.Produtos.AsNoTracking().ToListAsync();
+                return _uow.ProdutoRepository.GetProdutosPorPreco().ToList();
+            } catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao consultar produtos no banco de dados");
+            }
+        }
+
+
+        [HttpGet]
+        [ServiceFilter(typeof(ApiLoggingFilter))]
+        public ActionResult<IEnumerable<Produto>> Get()
+        {
+            try
+            {
+                return _uow.ProdutoRepository.Get().ToList();
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Não foi possível obter os produtos do banco de dados");
@@ -39,11 +53,11 @@ namespace ApiCatalogo.Controllers
 
         [HttpGet("/primeiro")]
         [HttpGet("primeiro")]
-        public async Task<ActionResult<Produto>> GetFirstAsync()
+        public ActionResult<Produto> GetFirst()
         {
             try
             {
-                return await _context.Produtos.AsNoTracking().FirstOrDefaultAsync();
+                return _uow.ProdutoRepository.Get().FirstOrDefault();
 
             }
             catch (Exception)
@@ -53,11 +67,11 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
-        public async Task<ActionResult<Produto>> GetAsync(int id, string parm2)
+        public ActionResult<Produto> Get(int id, string parm2)
         {
             try
             {
-                var prod = await _context.Produtos.AsNoTracking().FirstOrDefaultAsync(p => p.ProdutoId == id);
+                var prod = _uow.ProdutoRepository.GetById(p => p.ProdutoId == id);
                 if (prod == null)
                 {
                     return NotFound($"Produto com id {id} não encontrado");
@@ -75,8 +89,8 @@ namespace ApiCatalogo.Controllers
         {
             try
             {
-                _context.Produtos.Add(produto);
-                _context.SaveChanges();
+                _uow.ProdutoRepository.Add(produto);
+                _uow.Commit();
                 return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
             } catch (Exception)
             {
@@ -94,8 +108,8 @@ namespace ApiCatalogo.Controllers
                     return BadRequest("Produto não encontrado para alterar");
                 }
 
-                _context.Entry(produto).State = EntityState.Modified;
-                _context.SaveChanges();
+                _uow.ProdutoRepository.Update(produto);
+                _uow.Commit();
                 return Ok("Item editado com sucesso");
             } catch (Exception)
             {
@@ -103,21 +117,20 @@ namespace ApiCatalogo.Controllers
             }
         }
 
-        [HttpDelete("/{id}")]
+        [HttpDelete("{id}")]
         public ActionResult<Produto> Delete(int id)
         {
             try
             {
-                var prod = _context.Produtos.FirstOrDefault(prod => prod.ProdutoId == id);
-                //var prod = _context.Produtos.Find(id);
+                var prod = _uow.ProdutoRepository.GetById(p => p.ProdutoId == id);
 
                 if (prod == null)
                 {
                     return BadRequest();
                 }
 
-                _context.Produtos.Remove(prod);
-                _context.SaveChanges();
+                _uow.ProdutoRepository.Delete(prod);
+                _uow.Commit();
                 return prod;
             } catch (Exception)
             {

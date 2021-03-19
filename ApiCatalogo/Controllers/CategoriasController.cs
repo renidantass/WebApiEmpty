@@ -1,5 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
+using ApiCatalogo.Repository;
 using ApiCatalogo.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,19 +17,24 @@ namespace ApiCatalogo.Controllers
     [Route("api/[controller]")]
     public class CategoriasController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _uow;
         private readonly IConfiguration _configuration;
-        public CategoriasController(AppDbContext context, IConfiguration configuration)
+        public CategoriasController(IUnitOfWork uow, IConfiguration configuration)
         {
-            _context = context;
+            _uow = uow;
             _configuration = configuration;
         }
 
-        [HttpGet("/autor")]
-        public string GetAutor()
+        [HttpGet("produtos")]
+        public ActionResult<IEnumerable<Categoria>> GetCategoriasProdutos()
         {
-            var autor = _configuration["ConnectionStrings:DefaultConnection"];
-            return $"O autor é {autor}!!";
+            try
+            {
+                return _uow.CategoriaRepository.GetCategoriasProdutos().ToList();
+            } catch(Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter as categorias do banco de dados");
+            }
         }
 
         [HttpGet]
@@ -36,7 +42,7 @@ namespace ApiCatalogo.Controllers
         {
             try
             {
-                return _context.Categorias.Include(cat => cat.Produtos).ToList();
+                return _uow.CategoriaRepository.Get().ToList();
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter as categorias do banco de dados");
@@ -55,7 +61,7 @@ namespace ApiCatalogo.Controllers
         {
             try
             {
-                var cat = _context.Categorias.Include(cat => cat.Produtos).FirstOrDefault(cat => cat.CategoriaId == id);
+                var cat = _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
 
                 if (cat == null)
                 {
@@ -74,8 +80,8 @@ namespace ApiCatalogo.Controllers
         {
             try
             {
-                _context.Categorias.Add(categoria);
-                _context.SaveChanges();
+                _uow.CategoriaRepository.Add(categoria);
+                _uow.Commit();
                 return CreatedAtRoute("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
             } catch (Exception)
             {
@@ -93,8 +99,8 @@ namespace ApiCatalogo.Controllers
                     return BadRequest($"Não foi possível atualizar a categoria com id={id}");
                 }
 
-                _context.Entry(categoria).State = EntityState.Modified;
-                _context.SaveChanges();
+                _uow.CategoriaRepository.Update(categoria);
+                _uow.Commit();
                 return Ok($"Categoria com id={id} foi atualizada com sucesso");
             } catch (Exception)
             {
@@ -107,14 +113,15 @@ namespace ApiCatalogo.Controllers
         {
             try
             {
-                var cat = _context.Categorias.FirstOrDefault(cat => cat.CategoriaId == id);
+                var cat = _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
 
                 if (cat == null)
                 {
                     return NotFound($"A categoria com id={id} não foi encontrada");
                 }
 
-                _context.Categorias.Remove(cat);
+                _uow.CategoriaRepository.Delete(cat);
+                _uow.Commit();
                 return cat;
             } catch (Exception)
             {
