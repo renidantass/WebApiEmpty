@@ -1,7 +1,9 @@
 ﻿using ApiCatalogo.Context;
+using ApiCatalogo.DTOs;
 using ApiCatalogo.Models;
 using ApiCatalogo.Repository;
 using ApiCatalogo.Services;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,19 +20,21 @@ namespace ApiCatalogo.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly IUnitOfWork _uow;
-        private readonly IConfiguration _configuration;
-        public CategoriasController(IUnitOfWork uow, IConfiguration configuration)
+        private readonly IMapper _mapper;
+        public CategoriasController(IUnitOfWork uow, IMapper mapper)
         {
             _uow = uow;
-            _configuration = configuration;
+            _mapper = mapper;
         }
 
         [HttpGet("produtos")]
-        public ActionResult<IEnumerable<Categoria>> GetCategoriasProdutos()
+        public ActionResult<IEnumerable<CategoriaDTO>> GetCategoriasProdutos()
         {
             try
             {
-                return _uow.CategoriaRepository.GetCategoriasProdutos().ToList();
+                var categorias = _uow.CategoriaRepository.GetCategoriasProdutos().ToList();
+                var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categorias);
+                return categoriasDTO;
             } catch(Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter as categorias do banco de dados");
@@ -38,11 +42,13 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Categoria>> Get()
+        public ActionResult<IEnumerable<CategoriaDTO>> Get()
         {
             try
             {
-                return _uow.CategoriaRepository.Get().ToList();
+                var categorias = _uow.CategoriaRepository.Get().ToList();
+                var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categorias);
+                return categoriasDTO;
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter as categorias do banco de dados");
@@ -57,7 +63,7 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet("{id}", Name = "ObterCategoria" )]
-        public ActionResult<Categoria> Get(int id)
+        public ActionResult<CategoriaDTO> Get(int id)
         {
             try
             {
@@ -68,7 +74,9 @@ namespace ApiCatalogo.Controllers
                     return NotFound($"A categoria com id={id} não foi encontrada");
                 }
 
-                return cat;
+                var catDTO = _mapper.Map<CategoriaDTO>(cat);
+
+                return catDTO;
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao obter categoria do banco de dados");
@@ -76,13 +84,14 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] Categoria categoria)
+        public ActionResult Post([FromBody] CategoriaDTO categoriaDto)
         {
             try
             {
+                var categoria = _mapper.Map<Categoria>(categoriaDto);
                 _uow.CategoriaRepository.Add(categoria);
                 _uow.Commit();
-                return CreatedAtRoute("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
+                return CreatedAtRoute("ObterCategoria", new { id = categoriaDto.CategoriaId }, categoriaDto);
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao inserir nova categoria no banco de dados");
@@ -90,14 +99,16 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put(int id, [FromBody] Categoria categoria)
+        public ActionResult Put(int id, [FromBody] CategoriaDTO categoriaDto)
         {
             try
             {
-                if (id != categoria.CategoriaId)
+                if (id != categoriaDto.CategoriaId)
                 {
                     return BadRequest($"Não foi possível atualizar a categoria com id={id}");
                 }
+
+                var categoria = _mapper.Map<Categoria>(categoriaDto);
 
                 _uow.CategoriaRepository.Update(categoria);
                 _uow.Commit();
@@ -109,7 +120,7 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<Categoria> Delete(int id)
+        public ActionResult<CategoriaDTO> Delete(int id)
         {
             try
             {
@@ -122,7 +133,10 @@ namespace ApiCatalogo.Controllers
 
                 _uow.CategoriaRepository.Delete(cat);
                 _uow.Commit();
-                return cat;
+
+                var catDto = _mapper.Map<CategoriaDTO>(cat);
+
+                return catDto;
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao deletar categoria do banco de dados");

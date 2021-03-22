@@ -1,7 +1,9 @@
 ﻿using ApiCatalogo.Context;
+using ApiCatalogo.DTOs;
 using ApiCatalogo.Filters;
 using ApiCatalogo.Models;
 using ApiCatalogo.Repository;
+using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,19 +20,23 @@ namespace ApiCatalogo.Controllers
     public class ProdutosController : ControllerBase
     {
         private readonly IUnitOfWork _uow;
+        private readonly IMapper _mapper;
         private readonly ILogger _logger;
-        public ProdutosController(IUnitOfWork uow, ILogger<CategoriasController> logger)
+        public ProdutosController(IUnitOfWork uow, ILogger<CategoriasController> logger, IMapper mapper)
         {
             _uow = uow;
+            _mapper = mapper;
             _logger = logger;
         }
 
         [HttpGet("menorpreco")]
-        public ActionResult<IEnumerable<Produto>> GetProdutosPorPreco()
+        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosPorPreco()
         {
             try
             {
-                return _uow.ProdutoRepository.GetProdutosPorPreco().ToList();
+                var produtos = _uow.ProdutoRepository.GetProdutosPorPreco().ToList();
+                var produtosDTO = _mapper.Map<List<ProdutoDTO>>(produtos);
+                return produtosDTO;
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao consultar produtos no banco de dados");
@@ -40,11 +46,12 @@ namespace ApiCatalogo.Controllers
 
         [HttpGet]
         [ServiceFilter(typeof(ApiLoggingFilter))]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public ActionResult<IEnumerable<ProdutoDTO>> Get()
         {
             try
             {
-                return _uow.ProdutoRepository.Get().ToList();
+                var prod = _uow.ProdutoRepository.Get().ToList();
+                return _mapper.Map<List<ProdutoDTO>>(prod);
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Não foi possível obter os produtos do banco de dados");
@@ -53,12 +60,12 @@ namespace ApiCatalogo.Controllers
 
         [HttpGet("/primeiro")]
         [HttpGet("primeiro")]
-        public ActionResult<Produto> GetFirst()
+        public ActionResult<ProdutoDTO> GetFirst()
         {
             try
             {
-                return _uow.ProdutoRepository.Get().FirstOrDefault();
-
+                var prod = _uow.ProdutoRepository.Get().FirstOrDefault();
+                return _mapper.Map<ProdutoDTO>(prod);
             }
             catch (Exception)
             {
@@ -67,7 +74,7 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
-        public ActionResult<Produto> Get(int id, string parm2)
+        public ActionResult<ProdutoDTO> Get(int id, string parm2)
         {
             try
             {
@@ -77,7 +84,7 @@ namespace ApiCatalogo.Controllers
                     return NotFound($"Produto com id {id} não encontrado");
                 }
 
-                return prod;
+                return _mapper.Map<ProdutoDTO>(prod);
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Não foi possível o obter produto de id {id} do banco de dados");
@@ -85,13 +92,14 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPost]
-        public  ActionResult Post([FromBody] Produto produto)
+        public  ActionResult Post([FromBody] ProdutoDTO produtoDto)
         {
             try
             {
-                _uow.ProdutoRepository.Add(produto);
+                var prod = _mapper.Map<Produto>(produtoDto);
+                _uow.ProdutoRepository.Add(prod);
                 _uow.Commit();
-                return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+                return new CreatedAtRouteResult("ObterProduto", new { id = produtoDto.ProdutoId }, produtoDto);
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Não foi possível adicionar item ao banco de dados");
@@ -99,16 +107,18 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put(int id, [FromBody] Produto produto)
+        public ActionResult Put(int id, [FromBody] ProdutoDTO produtoDto)
         {
             try
             {
-                if (id != produto.ProdutoId)
+                if (id != produtoDto.ProdutoId)
                 {
                     return BadRequest("Produto não encontrado para alterar");
                 }
 
-                _uow.ProdutoRepository.Update(produto);
+                var prod = _mapper.Map<Produto>(produtoDto);
+
+                _uow.ProdutoRepository.Update(prod);
                 _uow.Commit();
                 return Ok("Item editado com sucesso");
             } catch (Exception)
@@ -118,7 +128,7 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<Produto> Delete(int id)
+        public ActionResult<ProdutoDTO> Delete(int id)
         {
             try
             {
@@ -131,7 +141,10 @@ namespace ApiCatalogo.Controllers
 
                 _uow.ProdutoRepository.Delete(prod);
                 _uow.Commit();
-                return prod;
+
+                var produto = _mapper.Map<ProdutoDTO>(prod);
+
+                return produto;
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao deletar item no banco de dados");

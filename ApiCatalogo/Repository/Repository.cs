@@ -31,7 +31,7 @@ namespace ApiCatalogo.Repository
 
         public T GetById(Expression<Func<T, bool>> predicate)
         {
-            return _context.Set<T>().SingleOrDefault(predicate);
+            return _context.Set<T>().FirstOrDefault(predicate);
         }
 
         public void Update(T entity)
