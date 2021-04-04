@@ -1,6 +1,7 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.DTOs;
 using ApiCatalogo.Models;
+using ApiCatalogo.Pagination;
 using ApiCatalogo.Repository;
 using ApiCatalogo.Services;
 using AutoMapper;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,11 +30,11 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet("produtos")]
-        public ActionResult<IEnumerable<CategoriaDTO>> GetCategoriasProdutos()
+        public async Task<ActionResult<IEnumerable<CategoriaDTO>>> GetCategoriasProdutos()
         {
             try
             {
-                var categorias = _uow.CategoriaRepository.GetCategoriasProdutos().ToList();
+                var categorias = await _uow.CategoriaRepository.GetCategoriasProdutos();
                 var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categorias);
                 return categoriasDTO;
             } catch(Exception)
@@ -42,11 +44,24 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<CategoriaDTO>> Get()
+        public async Task<ActionResult<IEnumerable<CategoriaDTO>>> Get([FromQuery] QueryStringParameters categoriasParameters)
         {
             try
             {
-                var categorias = _uow.CategoriaRepository.Get().ToList();
+                var categorias = await _uow.CategoriaRepository.GetCategorias(categoriasParameters);
+
+                var metadata = new
+                {
+                    categorias.TotalCount,
+                    categorias.PageSize,
+                    categorias.CurrentPage,
+                    categorias.TotalPages,
+                    categorias.HasNext,
+                    categorias.HasPrevious
+                };
+
+                Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
                 var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categorias);
                 return categoriasDTO;
             } catch (Exception)
@@ -63,11 +78,11 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpGet("{id}", Name = "ObterCategoria" )]
-        public ActionResult<CategoriaDTO> Get(int id)
+        public async Task<ActionResult<CategoriaDTO>> Get(int id)
         {
             try
             {
-                var cat = _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
+                var cat = await _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
 
                 if (cat == null)
                 {
@@ -84,14 +99,17 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post([FromBody] CategoriaDTO categoriaDto)
+        public async Task<ActionResult> Post([FromBody] CategoriaDTO categoriaDto)
         {
             try
             {
                 var categoria = _mapper.Map<Categoria>(categoriaDto);
                 _uow.CategoriaRepository.Add(categoria);
-                _uow.Commit();
-                return CreatedAtRoute("ObterCategoria", new { id = categoriaDto.CategoriaId }, categoriaDto);
+                await _uow.Commit();
+
+                var categoriaDTO = _mapper.Map<CategoriaDTO>(categoria);
+
+                return CreatedAtRoute("ObterCategoria", new { id = categoriaDTO.CategoriaId }, categoriaDTO);
             } catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao inserir nova categoria no banco de dados");
@@ -99,7 +117,7 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult Put(int id, [FromBody] CategoriaDTO categoriaDto)
+        public async Task<ActionResult> Put(int id, [FromBody] CategoriaDTO categoriaDto)
         {
             try
             {
@@ -111,7 +129,7 @@ namespace ApiCatalogo.Controllers
                 var categoria = _mapper.Map<Categoria>(categoriaDto);
 
                 _uow.CategoriaRepository.Update(categoria);
-                _uow.Commit();
+                await _uow.Commit();
                 return Ok($"Categoria com id={id} foi atualizada com sucesso");
             } catch (Exception)
             {
@@ -120,11 +138,11 @@ namespace ApiCatalogo.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult<CategoriaDTO> Delete(int id)
+        public async Task<ActionResult<CategoriaDTO>> Delete(int id)
         {
             try
             {
-                var cat = _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
+                var cat = await _uow.CategoriaRepository.GetById(cat => cat.CategoriaId == id);
 
                 if (cat == null)
                 {
@@ -132,7 +150,7 @@ namespace ApiCatalogo.Controllers
                 }
 
                 _uow.CategoriaRepository.Delete(cat);
-                _uow.Commit();
+                await _uow.Commit();
 
                 var catDto = _mapper.Map<CategoriaDTO>(cat);
 

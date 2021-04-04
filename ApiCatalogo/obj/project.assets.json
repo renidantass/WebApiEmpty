@@ -1263,19 +1263,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Reni Alkimim\\.nuget\\packages\\": {}
+    "C:\\Users\\Reni\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\ApiCatalogo.csproj",
+      "projectUniqueName": "C:\\source\\repos\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\ApiCatalogo.csproj",
       "projectName": "ApiCatalogo",
-      "projectPath": "C:\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\ApiCatalogo.csproj",
-      "packagesPath": "C:\\Users\\Reni Alkimim\\.nuget\\packages\\",
-      "outputPath": "C:\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\obj\\",
+      "projectPath": "C:\\source\\repos\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\ApiCatalogo.csproj",
+      "packagesPath": "C:\\Users\\Reni\\.nuget\\packages\\",
+      "outputPath": "C:\\source\\repos\\_curso_webapi\\WebApiEmpty\\ApiCatalogo\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Reni Alkimim\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Reni\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
